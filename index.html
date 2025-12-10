@@ -942,13 +942,13 @@
         let generatedUrl = '';
         try {
             // ベースURLを指定のものに固定
-            const baseUrl = new URL('https://beeb-c4n.github.io/tbot/share/index.html');
+            const baseUrl = new URL('https://beeb-c4n.github.io/3bott/share/index.html');
             baseUrl.search = params;
             generatedUrl = baseUrl.href;
         } catch (e) {
             // エラー時はフォールバック
             console.warn('URL generation failed, using fallback string. Error:', e);
-            generatedUrl = `https://beeb-c4n.github.io/tbot/share/index.html?${params.toString()}`;
+            generatedUrl = `https://beeb-c4n.github.io/3bott/share/index.html?${params.toString()}`;
         }
 
         shareUrlInput.value = generatedUrl;
