@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Books on the Table</title>
+    <style>
+        /* =========================================
+           基本スタイル (Reset & Base)
+           ========================================= */
+        :root {
+            --primary-color: #3e2723;
+            --accent-color: #5d4037;
+            --bg-color: #212121;
+            --shelf-bg: #4e342e;
+            --shelf-board-top: #8d6e63;
+            --text-color: #333;
+            --label-bg: #f9f9f9;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* =========================================
+           ヘッダー
+           ========================================= */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            color: #d7ccc8;
+        }
+
+        header h1 {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: 2.2rem;
+            margin: 0 0 10px 0;
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            letter-spacing: 0.1em;
+            margin: 0;
+            min-height: 1.5em; /* 高さを確保 */
+        }
+
+        /* =========================================
+           本棚エリア
+           ========================================= */
+        .shelves-container {
+            background-color: #3e2723;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%, rgba(0,0,0,0.4)), 
+                repeating-linear-gradient(90deg, #3e2723 0, #3e2723 2px, #4e342e 3px, #3e2723 4px);
+            padding: 60px 30px 80px 30px;
+            border-radius: 4px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.6);
+            border: 12px solid #281a16;
+            position: relative;
+        }
+
+        /* 本棚のグリッドレイアウト */
+        .shelves-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* スマホは縦1列 */
+            gap: 80px; /* 棚の間隔 */
+        }
+
+        /* PC画面では横3列 */
+        @media (min-width: 768px) {
+            .shelves-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 40px;
+            }
+        }
+
+        /* 本棚の1区画 */
+        .shelf-slot {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            align-items: center;
+        }
+
+        /* 棚板 */
+        .shelf-board {
+            width: 100%;
+            height: 24px;
+            background: linear-gradient(to bottom, #8d6e63 0%, #5d4037 15%, #3e2723 100%);
+            border-radius: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+            position: absolute;
+            bottom: 120px; /* 本の下の位置調整（ここが基準） */
+            left: 0;
+            z-index: 2;
+        }
+        
+        /* 棚の影（奥行き） */
+        .shelf-shadow {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            right: 10px;
+            bottom: 120px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* =========================================
+           本の表示エリア
+           ========================================= */
+        .book-container {
+            position: relative;
+            z-index: 10;
+            margin-bottom: 24px; /* 棚板までの距離調整 */
+            height: 280px; /* 本の最大高さスペース */
+            display: flex;
+            align-items: flex-end; /* 下揃え */
+            justify-content: center;
+            perspective: 1000px;
+            width: 100%;
+            padding-bottom: 0; /* 棚板の上に載せる */
+        }
+
+        /* 本のリンク・画像 */
+        .book-link {
+            display: block;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-origin: bottom center;
+            position: relative;
+        }
+
+        .book-cover {
+            max-height: 220px;
+            width: auto;
+            max-width: 160px;
+            box-shadow: -5px 5px 10px rgba(0,0,0,0.5);
+            border-radius: 1px 3px 3px 1px;
+            /* 本の立体感を出す変形 */
+            transform: rotateY(-10deg);
+            background-color: #fff; /* 画像ロード前の背景 */
+            object-fit: contain;
+            display: block;
+        }
+
+        /* ホバー時の挙動 */
+        .book-link:hover {
+            transform: scale(1.05) rotateY(0deg) translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+            cursor: pointer;
+            z-index: 20;
+        }
+        
+        .book-link:hover .book-cover {
+            transform: rotateY(0deg);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        /* =========================================
+           美術館風キャプション（説明書き）
+           ========================================= */
+        .museum-label {
+            background-color: var(--label-bg);
+            width: 85%;
+            padding: 15px 20px;
+            /* 修正: マージンを60pxに戻す */
+            margin-top: 60px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+            text-align: left;
+            border-left: 4px solid #333; /* アクセントライン */
+            font-size: 0.85rem;
+            color: #444;
+            opacity: 0; /* 初期状態は非表示 */
+            transform: translateY(10px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            z-index: 5; /* 棚板より手前にする */
+        }
+
+        .museum-label.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* タグ（作品テーマ） */
+        .label-tag {
+            font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+            display: block;
+        }
+
+        /* 書誌情報 */
+        .label-meta {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.5;
+        }
+
+        .label-title {
+            font-style: italic;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 2px;
+            color: #000;
+        }
+
+        .label-author {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        /* 発行年のスタイル追加 */
+        .label-year {
+            display: block;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+            font-feature-settings: "palt";
+        }
+        
+        /* ロード中の表示 */
+        .loading {
+            color: #d7ccc8;
+            font-size: 0.9rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        /* エラー表示 */
+        .error-msg {
+            color: #e57373;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .empty-slot {
+            height: 220px;
+            width: 140px;
+            border: 2px dashed rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.2);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Three Books on the Table</h1>
+        <!-- サブタイトルはJSで書き換える可能性あり -->
+        <p id="header-subtitle">Selected Books Exhibition</p>
+    </header>
+
+    <div class="shelves-container">
+        <div class="shelves-grid">
+            <!-- Book 1 -->
+            <div class="shelf-slot" id="slot-1">
+                <div class="shelf-shadow"></div>
+                <div class="book-container" id="book-1-container">
+                    <div class="loading">Loading...</div>
+                </div>
+                <div class="shelf-board"></div>
+                <!-- 美術館風キャプション -->
+                <div class="museum-label" id="label-1">
+                    <span class="label-tag" id="tag-1"></span>
+                    <div class="label-meta">
+                        <span class="label-author" id="author-1"></span>
+                        <span class="label-title" id="title-1"></span>
+                        <span class="label-year" id="year-1"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book 2 -->
+            <div class="shelf-slot" id="slot-2">
+                <div class="shelf-shadow"></div>
+                <div class="book-container" id="book-2-container">
+                    <div class="loading">Loading...</div>
+                </div>
+                <div class="shelf-board"></div>
+                <div class="museum-label" id="label-2">
+                    <span class="label-tag" id="tag-2"></span>
+                    <div class="label-meta">
+                        <span class="label-author" id="author-2"></span>
+                        <span class="label-title" id="title-2"></span>
+                        <span class="label-year" id="year-2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book 3 -->
+            <div class="shelf-slot" id="slot-3">
+                <div class="shelf-shadow"></div>
+                <div class="book-container" id="book-3-container">
+                    <div class="loading">Loading...</div>
+                </div>
+                <div class="shelf-board"></div>
+                <div class="museum-label" id="label-3">
+                    <span class="label-tag" id="tag-3"></span>
+                    <div class="label-meta">
+                        <span class="label-author" id="author-3"></span>
+                        <span class="label-title" id="title-3"></span>
+                        <span class="label-year" id="year-3"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * URLパラメータを解析する
+     */
+    function getUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // 差出人情報の取得
+        const sender = params.get('sender');
+
+        // パラメータがない場合のサンプルデータ（ユーザー提供のテストデータ）
+        if (!params.has('b1_isbn') && !params.has('b2_isbn') && !params.has('b3_isbn')) {
+             console.log("No params found, using user provided sample data.");
+             return {
+                 sender: 'Hanyuda',
+                 1: { isbn: '9784309867762', tag: 'あなたにおすすめ' },
+                 2: { isbn: '9784152033932', tag: '人生を変えた一冊' },
+                 3: { isbn: '9784101001593', tag: 'マイブーム' }
+             };
+        }
+
+        return {
+            sender: sender,
+            // URLSearchParamsは値取得時に自動的にデコードを行います
+            1: { isbn: params.get('b1_isbn'), tag: params.get('b1_tag') },
+            2: { isbn: params.get('b2_isbn'), tag: params.get('b2_tag') },
+            3: { isbn: params.get('b3_isbn'), tag: params.get('b3_tag') }
+        };
+    }
+
+    /**
+     * Google Books APIから書籍情報を取得する
+     */
+    async function fetchBookInfo(isbn) {
+        if (!isbn) return null;
+        const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.totalItems > 0 && data.items.length > 0) {
+                return data.items[0];
+            }
+            return null;
+        } catch (error) {
+            console.error("API Error:", error);
+            return null;
+        }
+    }
+
+    /**
+     * HTMLエスケープ処理
+     */
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function(match) {
+            const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return escape[match];
+        });
+    }
+
+    /**
+     * 画面描画
+     */
+    async function renderShelf() {
+        const booksData = getUrlParams();
+
+        // 差出人がいる場合のヘッダー書き換え
+        if (booksData.sender) {
+            const headerSubtitle = document.getElementById('header-subtitle');
+            // XSS対策のためtextContentを使用
+            headerSubtitle.textContent = `Here are the books recommended by ${booksData.sender}`;
+        }
+
+        for (let i = 1; i <= 3; i++) {
+            const slotData = booksData[i];
+            const container = document.getElementById(`book-${i}-container`);
+            const labelEl = document.getElementById(`label-${i}`);
+            
+            // データがない、またはISBNが空の場合
+            if (!slotData || !slotData.isbn) {
+                container.innerHTML = '<div class="empty-slot">Empty</div>';
+                labelEl.style.display = 'none'; // ラベルも非表示
+                continue;
+            }
+
+            // 書籍データ取得
+            const bookInfo = await fetchBookInfo(slotData.isbn);
+
+            if (bookInfo) {
+                const info = bookInfo.volumeInfo;
+                const title = info.title || "Unknown Title";
+                const authors = info.authors ? info.authors.join(", ") : "Unknown Author";
+                const link = info.infoLink || info.previewLink || "#";
+                
+                // 発行年の取得とフォーマット
+                let pubYear = "";
+                if (info.publishedDate) {
+                    // YYYY-MM-DD または YYYY 形式から年だけ抽出
+                    const yearMatch = info.publishedDate.match(/^(\d{4})/);
+                    if (yearMatch) {
+                        pubYear = yearMatch[1] + "年";
+                    } else {
+                        pubYear = info.publishedDate;
+                    }
+                }
+
+                // 画像URL（httpsに変換）
+                let thumb = "https://placehold.jp/128x196.png?text=No+Image";
+                if (info.imageLinks) {
+                    if (info.imageLinks.thumbnail) {
+                        thumb = info.imageLinks.thumbnail.replace(/^http:\/\//i, 'https://');
+                    } else if (info.imageLinks.smallThumbnail) {
+                        thumb = info.imageLinks.smallThumbnail.replace(/^http:\/\//i, 'https://');
+                    }
+                }
+
+                // 本の表示（カバー画像）
+                container.innerHTML = `
+                    <a href="${link}" target="_blank" class="book-link" title="${escapeHtml(title)} をGoogle Booksで見る">
+                        <img src="${thumb}" alt="${escapeHtml(title)}" class="book-cover">
+                    </a>
+                `;
+
+                // ラベル（キャプション）の表示
+                // パラメータのタグをそのまま表示（URLSearchParamsによる自動デコードを利用）
+                document.getElementById(`tag-${i}`).textContent = slotData.tag || "Untitled Selection"; 
+                document.getElementById(`title-${i}`).textContent = title;
+                document.getElementById(`author-${i}`).textContent = authors;
+                
+                // 発行年の表示
+                if (pubYear) {
+                    document.getElementById(`year-${i}`).textContent = `(${pubYear})`;
+                } else {
+                    document.getElementById(`year-${i}`).textContent = "";
+                }
+                
+                // フェードインアニメーション
+                setTimeout(() => {
+                    labelEl.classList.add('visible');
+                }, i * 200); // 順番に表示
+
+            } else {
+                // 本が見つからなかった場合
+                container.innerHTML = '<div class="error-msg">Book Not Found</div>';
+                labelEl.style.display = 'none';
+            }
+        }
+    }
+
+    // 実行
+    document.addEventListener('DOMContentLoaded', renderShelf);
+
+</script>
+
+</body>
+</html>
