@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Books on the Table</title>
+    <style>
+        /* =========================================
+           基本スタイル (Reset & Base)
+           ========================================= */
+        :root {
+            /* シックな本棚風カラーパレット */
+            --primary-color: #3e2723; /* 非常に濃い茶色 */
+            --accent-color: #5d4037;  /* 濃い茶色 */
+            --accent-hover: #4e342e;
+            --bg-color: #212121;      /* 背景はダークに */
+            --shelf-bg: #4e342e;      /* 棚の背板（影） */
+            --shelf-board-top: #8d6e63; /* 棚板の上面 */
+            --shelf-board-front: #5d4037; /* 棚板の前面 */
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --text-light: #d7ccc8;
+            --border-color: #a1887f;
+            --slot-bg: #3e2723;       /* 本が置かれる場所の背景（暗く） */
+            --error-color: #ef5350;   /* エラー色は少し明るめの赤 */
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* =========================================
+           ヘッダー
+           ========================================= */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background-color: #fff; /* コントラストのため白背景 */
+            border-radius: 4px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        header h1 {
+            font-family: "Georgia", "Times New Roman", serif; /* シックなセリフ体 */
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            border-bottom: none;
+            display: block;
+            letter-spacing: 0.05em;
+        }
+
+        header p {
+            font-size: 1rem;
+            color: #5d4037;
+            font-weight: normal;
+            letter-spacing: 0.1em;
+        }
+
+        /* =========================================
+           共通コンポーネント
+           ========================================= */
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            border: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #efebe9;
+            padding: 12px 20px;
+            font-size: 1rem;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #3e2723;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            background-color: #d7ccc8;
+            color: var(--primary-color);
+            margin: 2px;
+            border: 1px solid var(--accent-color);
+        }
+        
+        .btn-sm:hover {
+            background-color: #bcaaa4;
+        }
+
+        input[type="text"], input[list] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 1rem;
+            margin-bottom: 0; /* ラッパーで制御するため0に */
+            background-color: #fff;
+            color: #333;
+        }
+
+        input[type="text"]:focus, input[list]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(93, 64, 55, 0.3);
+        }
+
+        /* =========================================
+           本棚エリア（シックなデザイン変更）
+           ========================================= */
+        .shelves-container {
+            /* 木目の背景画像があればベストですが、CSSグラデーションで表現 */
+            background-color: #3e2723;
+            background-image: linear-gradient(to right, rgba(0,0,0,0.3), rgba(0,0,0,0) 10%, rgba(0,0,0,0) 90%, rgba(0,0,0,0.3)), 
+                              repeating-linear-gradient(90deg, #3e2723 0, #3e2723 2px, #4e342e 3px, #3e2723 4px);
+            padding: 40px 20px 60px 20px;
+            border-radius: 2px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.5);
+            margin-bottom: 50px;
+            border: 8px solid #281a16;
+            position: relative;
+        }
+
+        .shelves-title {
+            display: none; /* シンプルにするためタイトルはヘッダーに任せる */
+        }
+
+        .shelves-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 50px; /* 棚の間隔を広げる */
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width: 768px) {
+            .shelves-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 40px;
+            }
+        }
+
+        /* 本棚の1区画 */
+        .shelf-slot {
+            background-color: transparent;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 棚板の表現（リアルに） */
+        .shelf-board {
+            height: 20px;
+            background: linear-gradient(to bottom, #8d6e63 0%, #5d4037 10%, #3e2723 100%);
+            border-radius: 2px;
+            box-shadow: 0 8px 10px rgba(0,0,0,0.6);
+            margin-top: -2px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* 棚の奥（影） */
+        .shelf-shadow {
+            position: absolute;
+            top: -10px;
+            left: 5px;
+            right: 5px;
+            bottom: 20px;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.7);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 本のエリア */
+        .book-placeholder {
+            /* 暗めの背景で本を引き立てる */
+            background-color: transparent; 
+            border: none;
+            padding: 10px 15px 0 15px; /* 下のパディングなしで棚板に乗せる */
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 下揃え */
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+        
+        /* 本があるときのエフェクト */
+        .book-placeholder.has-book .book-display-card {
+            background-color: #fff;
+            border: 1px solid #d7ccc8;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            transform: perspective(600px) rotateY(-5deg); /* 少し立体的に */
+        }
+
+        .shelf-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #d7ccc8;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            width: 100%;
+            text-align: center;
+        }
+
+        .book-display-info {
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 本を下に配置 */
+            align-items: center;
+            padding-bottom: 10px;
+        }
+        
+        /* 本自体のカードスタイル */
+        .book-display-card {
+            background-color: rgba(255,255,255,0.05); /* 空のときはうっすら */
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 2px 4px 4px 2px;
+            width: 140px; /* 本の幅固定 */
+            height: 200px; /* 本の高さ固定 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 0;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .book-display-info strong {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #333;
+            line-height: 1.3;
+            max-height: 2.6em;
+            overflow: hidden;
+        }
+        
+        .book-display-info img {
+            max-height: 140px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            object-fit: contain;
+        }
+
+        .empty-message {
+            color: rgba(255,255,255,0.3);
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+        
+        /* ラベル入力エリア（吹き出し風に） */
+        .label-input-wrapper {
+            margin-top: 15px;
+            margin-bottom: 5px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .label-input-wrapper input {
+            font-size: 0.85rem;
+            padding: 8px 35px 8px 10px; /* 右側にボタン用の余白 */
+            background-color: rgba(255,255,255,0.95);
+            border: 1px solid #8d6e63;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            width: 100%;
+        }
+
+        /* リセットボタン（×） */
+        .clear-btn {
+            position: absolute;
+            right: 5px; /* 右端から少し離す */
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #999;
+            font-size: 1.2rem;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            padding: 0;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .clear-btn:hover {
+            color: #d32f2f;
+            background-color: rgba(0,0,0,0.05);
+        }
+        
+        /* 入力が空のときは非表示にするJS制御用クラス */
+        .clear-btn.hidden {
+            display: none;
+        }
+
+        /* =========================================
+           検索エリア
+           ========================================= */
+        .search-section {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            border-top: 4px solid var(--primary-color);
+        }
+        
+        .search-header {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .search-form {
+                grid-template-columns: 2fr 2fr 1fr; /* タイトル:著者:ボタン */
+                align-items: start;
+            }
+        }
+
+        .status-message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 1.5em;
+            color: var(--accent-color);
+        }
+        .status-message.error {
+            color: var(--error-color);
+        }
+
+        /* =========================================
+           検索結果エリア
+           ========================================= */
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .results-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .book-card {
+            background-color: #fff;
+            border: 1px solid #d7ccc8;
+            border-left: 5px solid var(--primary-color);
+            border-radius: 2px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: start;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .book-thumb {
+            width: 70px;
+            height: auto;
+            object-fit: contain;
+            background-color: #eee;
+            flex-shrink: 0;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .book-details {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .book-title {
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: #3e2723;
+        }
+
+        .book-author {
+            font-size: 0.85rem;
+            color: #5d4037;
+            margin: 0 0 5px 0;
+        }
+
+        .book-isbn {
+            font-size: 0.75rem;
+            color: #9e9e9e;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+
+        .slot-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .slot-actions button {
+            flex: 1;
+            white-space: nowrap;
+            background-color: #efebe9;
+            color: #3e2723;
+            border: 1px solid #bcaaa4;
+            font-size: 0.8rem;
+        }
+        
+        .slot-actions button:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        /* =========================================
+           シェアURL生成エリア
+           ========================================= */
+        .share-section {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 2px;
+            border: 1px solid #d7ccc8;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .share-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            font-family: "Georgia", serif;
+        }
+
+        .sender-input-area {
+            margin-bottom: 25px;
+            text-align: left;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sender-input-area label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #3e2723;
+        }
+
+        .sender-error {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: bold;
+            display: none; /* 初期は非表示 */
+        }
+        .sender-error.visible {
+            display: block;
+        }
+
+        .url-result-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-direction: column;
+        }
+        @media (min-width: 600px) {
+            .url-result-wrapper {
+                flex-direction: row;
+            }
+        }
+
+        .url-result {
+            flex-grow: 1;
+            padding: 15px;
+            background-color: #fafafa;
+            color: #555;
+            font-family: monospace;
+            cursor: pointer;
+            border: 2px dashed #bcaaa4;
+            border-radius: 4px;
+            margin: 0; /* ラッパー側でgap管理 */
+        }
+
+        .copy-btn {
+            background-color: #8d6e63;
+            color: white;
+            padding: 10px 20px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .copy-btn:hover {
+            background-color: #6d4c41;
+        }
+        
+        .copy-message {
+            height: 20px;
+            font-size: 0.9rem;
+            color: #2e7d32;
+            font-weight: bold;
+            margin-top: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .copy-message.visible {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Three Books on the Table</h1>
+        <p>いま、あなたが読んでいる3冊</p>
+    </header>
+
+    <!-- 本棚エリア -->
+    <section class="shelves-container">
+        <!-- 影の演出 -->
+        <div class="shelves-grid">
+            <!-- 本棚1 -->
+            <div class="shelf-slot">
+                <div class="shelf-shadow"></div>
+                <div class="book-placeholder" id="shelf-1-bg">
+                    <div class="shelf-label">No.1</div>
+                    <div class="book-display-info">
+                        <div id="shelf-1-display" class="book-display-card">
+                            <span class="empty-message">Empty</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shelf-board"></div>
+                <!-- ラベル入力エリア -->
+                <div class="label-input-wrapper">
+                    <input list="tag-options" id="shelf-1-tag" placeholder="この本は・・・" oninput="toggleClearBtn(1)">
+                    <button type="button" id="shelf-1-clear" class="clear-btn hidden" onclick="clearTagInput(1)" aria-label="入力をクリア">×</button>
+                </div>
+            </div>
+
+            <!-- 本棚2 -->
+            <div class="shelf-slot">
+                <div class="shelf-shadow"></div>
+                <div class="book-placeholder" id="shelf-2-bg">
+                    <div class="shelf-label">No.2</div>
+                    <div class="book-display-info">
+                        <div id="shelf-2-display" class="book-display-card">
+                            <span class="empty-message">Empty</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shelf-board"></div>
+                <!-- ラベル入力エリア -->
+                <div class="label-input-wrapper">
+                    <input list="tag-options" id="shelf-2-tag" placeholder="この本は・・・" oninput="toggleClearBtn(2)">
+                    <button type="button" id="shelf-2-clear" class="clear-btn hidden" onclick="clearTagInput(2)" aria-label="入力をクリア">×</button>
+                </div>
+            </div>
+
+            <!-- 本棚3 -->
+            <div class="shelf-slot">
+                <div class="shelf-shadow"></div>
+                <div class="book-placeholder" id="shelf-3-bg">
+                    <div class="shelf-label">No.3</div>
+                    <div class="book-display-info">
+                        <div id="shelf-3-display" class="book-display-card">
+                            <span class="empty-message">Empty</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shelf-board"></div>
+                <!-- ラベル入力エリア -->
+                <div class="label-input-wrapper">
+                    <input list="tag-options" id="shelf-3-tag" placeholder="この本は・・・" oninput="toggleClearBtn(3)">
+                    <button type="button" id="shelf-3-clear" class="clear-btn hidden" onclick="clearTagInput(3)" aria-label="入力をクリア">×</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 自由入力用の候補リスト -->
+    <datalist id="tag-options">
+        <option value="いま読んでいる本"></option>
+        <option value="あなたにおすすめ"></option>
+        <option value="子どもにおすすめ"></option>
+        <option value="枕頭の書"></option>
+        <option value="マイブーム"></option>
+        <option value="人生を変えた一冊"></option>
+        <option value="泣ける本"></option>
+    </datalist>
+
+    <!-- 検索エリア -->
+    <section class="search-section">
+        <div class="search-header">本を探す</div>
+        <div class="search-form">
+            <input type="text" id="search-title" placeholder="書名（キーワード）">
+            <input type="text" id="search-author" placeholder="著者名">
+            <button id="search-btn" class="btn-primary">検索</button>
+        </div>
+        <div style="font-size: 0.85rem; color: #8d6e63; margin-top: 5px;">※ 書名か著者名のどちらかは必須です</div>
+        <div id="status-message" class="status-message"></div>
+    </section>
+
+    <!-- 検索結果エリア -->
+    <section id="results-container" class="results-container">
+        <!-- ここに検索結果カードがJavaScriptで追加されます -->
+    </section>
+
+    <!-- シェア用URL生成エリア -->
+    <section class="share-section">
+        <h2>本棚が完成したらURLを作成</h2>
+        
+        <!-- 送信者ニックネーム入力欄 -->
+        <div class="sender-input-area">
+            <label for="sender-input">送信者のニックネーム（半角英数字）</label>
+            <input type="text" id="sender-input" placeholder="例: Taro, Hanako123">
+            <div id="sender-error" class="sender-error">半角英語でニックネームを入力してください</div>
+        </div>
+
+        <button id="generate-btn" class="btn-primary">シェア用URLを生成</button>
+        
+        <div class="url-result-wrapper">
+            <input type="text" id="share-url-input" class="url-result" readonly placeholder="ここにURLが生成されます" onclick="copyUrlToClipboard()">
+            <button class="copy-btn" onclick="copyUrlToClipboard()">URLをコピー</button>
+        </div>
+        <div id="copy-message" class="copy-message">URLをクリップボードにコピーしました！</div>
+    </section>
+</div>
+
+<script>
+    /**
+     * アプリケーションの状態管理
+     */
+    const shelfState = {
+        1: { isbn: null, title: null, thumb: null },
+        2: { isbn: null, title: null, thumb: null },
+        3: { isbn: null, title: null, thumb: null }
+    };
+
+    // DOM要素の取得
+    const searchTitleInput = document.getElementById('search-title');
+    const searchAuthorInput = document.getElementById('search-author');
+    const searchBtn = document.getElementById('search-btn');
+    const statusMessage = document.getElementById('status-message');
+    const resultsContainer = document.getElementById('results-container');
+    const generateBtn = document.getElementById('generate-btn');
+    const shareUrlInput = document.getElementById('share-url-input');
+    const senderInput = document.getElementById('sender-input');
+    const senderError = document.getElementById('sender-error');
+    const copyMessage = document.getElementById('copy-message');
+
+    /**
+     * ラベル入力のリセットボタン制御
+     */
+    window.toggleClearBtn = function(id) {
+        const input = document.getElementById(`shelf-${id}-tag`);
+        const btn = document.getElementById(`shelf-${id}-clear`);
+        if (input.value.length > 0) {
+            btn.classList.remove('hidden');
+        } else {
+            btn.classList.add('hidden');
+        }
+    };
+
+    window.clearTagInput = function(id) {
+        const input = document.getElementById(`shelf-${id}-tag`);
+        input.value = '';
+        toggleClearBtn(id); // ボタンを非表示にする
+        input.focus(); // 入力欄にフォーカスを戻す
+    };
+
+    /**
+     * Google Books API を検索する関数
+     */
+    async function searchBooks() {
+        const titleVal = searchTitleInput.value.trim();
+        const authorVal = searchAuthorInput.value.trim();
+
+        if (!titleVal && !authorVal) {
+            updateStatus('書名または著者名を入力してください', true);
+            return;
+        }
+
+        updateStatus('蔵書から探しています...', false);
+        resultsContainer.innerHTML = ''; 
+
+        // クエリの構築
+        let queryParts = [];
+        if (titleVal) queryParts.push(`intitle:${titleVal}`);
+        if (authorVal) queryParts.push(`inauthor:${authorVal}`);
+        
+        const queryString = queryParts.join('+');
+        const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${queryString}&maxResults=10`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (!data.items || data.items.length === 0) {
+                updateStatus('条件に合う本が見つかりませんでした', false);
+                return;
+            }
+
+            updateStatus(`${data.totalItems}件見つかりました（上位10件を表示）`, false);
+            renderResults(data.items);
+
+        } catch (error) {
+            console.error('API Error:', error);
+            updateStatus('検索中にエラーが発生しました', true);
+        }
+    }
+
+    /**
+     * 検索結果を表示する関数
+     */
+    function renderResults(items) {
+        items.forEach(item => {
+            const info = item.volumeInfo;
+            
+            const title = info.title || 'タイトル不明';
+            const authors = info.authors ? info.authors.join(', ') : '著者不明';
+            
+            // サムネイル画像のURL
+            let thumbnail = info.imageLinks ? info.imageLinks.smallThumbnail || info.imageLinks.thumbnail : null;
+            if (thumbnail) {
+                thumbnail = thumbnail.replace(/^http:\/\//i, 'https://');
+            }
+            
+            const isbn = getIsbn(info.industryIdentifiers);
+
+            // ISBNがない本はスキップ
+            if (!isbn) return;
+
+            // エスケープ処理
+            const safeTitle = escapeHtml(title);
+            const safeThumb = thumbnail ? escapeHtml(thumbnail) : '';
+
+            // カードHTMLの生成
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            
+            const imgHtml = thumbnail 
+                ? `<img src="${thumbnail}" alt="${safeTitle}" class="book-thumb">`
+                : `<div class="book-thumb" style="display:flex;align-items:center;justify-content:center;background:#ccc;font-size:0.7rem;color:#666;">No Image</div>`;
+
+            card.innerHTML = `
+                ${imgHtml}
+                <div class="book-details">
+                    <h3 class="book-title">${safeTitle}</h3>
+                    <p class="book-author">${authors}</p>
+                    <p class="book-isbn">ISBN: ${isbn}</p>
+                    <div class="slot-actions">
+                        <button class="btn-sm" onclick="setBookToShelf(1, '${isbn}', '${safeTitle}', '${safeThumb}')">棚 1 へ</button>
+                        <button class="btn-sm" onclick="setBookToShelf(2, '${isbn}', '${safeTitle}', '${safeThumb}')">棚 2 へ</button>
+                        <button class="btn-sm" onclick="setBookToShelf(3, '${isbn}', '${safeTitle}', '${safeThumb}')">棚 3 へ</button>
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.appendChild(card);
+        });
+
+        if (resultsContainer.children.length === 0) {
+            updateStatus('ISBN情報を持つ本が見つかりませんでした', false);
+        }
+    }
+
+    /**
+     * ISBNを取得するヘルパー関数
+     */
+    function getIsbn(identifiers) {
+        if (!identifiers || !Array.isArray(identifiers)) return null;
+        const isbn13 = identifiers.find(id => id.type === 'ISBN_13');
+        if (isbn13) return isbn13.identifier;
+        const isbn10 = identifiers.find(id => id.type === 'ISBN_10');
+        if (isbn10) return isbn10.identifier;
+        return null;
+    }
+
+    /**
+     * 本棚に本をセットする関数
+     */
+    window.setBookToShelf = function(shelfNum, isbn, title, thumbUrl) {
+        // 状態の更新
+        shelfState[shelfNum] = { isbn, title, thumb: thumbUrl };
+
+        // 画面の更新
+        const displayEl = document.getElementById(`shelf-${shelfNum}-display`);
+        const bgEl = document.getElementById(`shelf-${shelfNum}-bg`);
+
+        // サムネイルがあれば表示、なければタイトルのみ
+        let contentHtml = '';
+        if (thumbUrl) {
+            contentHtml = `<img src="${thumbUrl}" alt="${title}" style="max-height:140px; width:auto; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);">`;
+            // 本がセットされたらカードの背景を白くする（画像が映えるように）
+            displayEl.style.backgroundColor = '#fff';
+            displayEl.style.borderStyle = 'solid';
+        } else {
+            contentHtml = `<strong style="font-size:0.9rem; padding:10px;">${title}</strong>`;
+            displayEl.style.backgroundColor = '#fff';
+        }
+
+        displayEl.innerHTML = contentHtml;
+        
+        // エフェクトクラス追加
+        bgEl.classList.add('has-book');
+        
+        // アニメーション
+        displayEl.style.transform = "scale(1.05)";
+        setTimeout(() => {
+            displayEl.style.transform = "scale(1)";
+        }, 200);
+    };
+
+    /**
+     * シェア用URLを生成する関数
+     */
+    function generateShareUrl() {
+        // 初期化：エラーを隠す
+        senderError.classList.remove('visible');
+        senderInput.style.borderColor = '#8d6e63';
+
+        // 1冊でもセットされているか確認
+        const isAnyBookSet = Object.values(shelfState).some(shelf => shelf.isbn !== null);
+        if (!isAnyBookSet) {
+            alert('少なくとも1冊は本棚にセットしてください。');
+            return;
+        }
+
+        // 送信者ニックネームのバリデーション (半角英数字のみ許可)
+        const senderVal = senderInput.value.trim();
+        // 英数字以外が含まれている場合、または空の場合はエラーにする？
+        // 要件「半角英語でニックネームを入力してください」
+        // 空でもURL生成していいのか？ -> 文脈的に必須入力っぽいが、未入力ならパラメータ無しで進めるか、必須にするか。
+        // 「入力の条件にして」とあるので、何かしら入力されているかつ半角英数字であることをチェックする
+        
+        if (!senderVal) {
+             // 未入力の場合のエラー処理（必須とする場合）
+             senderError.textContent = 'ニックネームを入力してください';
+             senderError.classList.add('visible');
+             senderInput.style.borderColor = 'var(--error-color)';
+             senderInput.focus();
+             return;
+        }
+
+        if (!/^[a-zA-Z0-9]+$/.test(senderVal)) {
+            // 半角英数字以外が含まれている場合
+            senderError.textContent = '半角英語でニックネームを入力してください';
+            senderError.classList.add('visible');
+            senderInput.style.borderColor = 'var(--error-color)';
+            senderInput.focus();
+            return;
+        }
+
+        const params = new URLSearchParams();
+
+        // ニックネーム追加
+        params.append('sender', senderVal);
+
+        for (let i = 1; i <= 3; i++) {
+            const book = shelfState[i];
+            const tagInput = document.getElementById(`shelf-${i}-tag`);
+            
+            // 本がセットされている場合のみパラメータを追加
+            if (book.isbn) {
+                params.append(`b${i}_isbn`, book.isbn);
+                const tagValue = tagInput.value.trim();
+                if (tagValue) {
+                    params.append(`b${i}_tag`, tagValue);
+                }
+            }
+        }
+
+        // URL生成
+        let generatedUrl = '';
+        try {
+            // ベースURLを指定のものに固定
+            const baseUrl = new URL('https://beeb-c4n.github.io/tbot/share/index.html');
+            baseUrl.search = params;
+            generatedUrl = baseUrl.href;
+        } catch (e) {
+            // エラー時はフォールバック
+            console.warn('URL generation failed, using fallback string. Error:', e);
+            generatedUrl = `https://beeb-c4n.github.io/tbot/share/index.html?${params.toString()}`;
+        }
+
+        shareUrlInput.value = generatedUrl;
+        
+        // 生成されたら自動で選択だけしておく
+        shareUrlInput.focus();
+        shareUrlInput.select();
+    }
+
+    /**
+     * URLをクリップボードにコピーする関数
+     */
+    window.copyUrlToClipboard = function() {
+        const urlText = shareUrlInput.value;
+        if (!urlText) return;
+
+        // まずテキストを選択状態にする
+        shareUrlInput.select();
+        shareUrlInput.setSelectionRange(0, 99999); // モバイル対応
+
+        // Clipboard API を試みる
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(urlText).then(() => {
+                showCopyMessage();
+            }).catch(err => {
+                console.error('Clipboard API failed', err);
+                fallbackCopy();
+            });
+        } else {
+            fallbackCopy();
+        }
+    };
+
+    function fallbackCopy() {
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyMessage();
+            } else {
+                alert('コピーできませんでした。手動でコピーしてください。');
+            }
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+            alert('コピーできませんでした。手動でコピーしてください。');
+        }
+    }
+
+    function showCopyMessage() {
+        copyMessage.classList.add('visible');
+        setTimeout(() => {
+            copyMessage.classList.remove('visible');
+        }, 3000);
+    }
+
+    function updateStatus(msg, isError) {
+        statusMessage.textContent = msg;
+        if (isError) {
+            statusMessage.classList.add('error');
+        } else {
+            statusMessage.classList.remove('error');
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function(match) {
+            const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return escape[match];
+        });
+    }
+
+    // イベントリスナーの設定
+    searchBtn.addEventListener('click', searchBooks);
+    
+    // Enterキー対応
+    const handleEnter = (e) => {
+        if (e.key === 'Enter') searchBooks();
+    };
+    searchTitleInput.addEventListener('keypress', handleEnter);
+    searchAuthorInput.addEventListener('keypress', handleEnter);
+
+    generateBtn.addEventListener('click', generateShareUrl);
+
+</script>
+
+</body>
+</html>
